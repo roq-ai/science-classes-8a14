@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model organization {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  description String?   @db.VarChar(255)
+  image       String?   @db.VarChar(255)
+  name        String    @db.VarChar(255)
+  created_at  DateTime  @default(now()) @db.Timestamp(6)
+  updated_at  DateTime  @default(now()) @db.Timestamp(6)
+  user_id     String    @db.Uuid
+  tenant_id   String    @db.VarChar(255)
+  user        user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  student     student[]
+}
+
+model parent {
+  id                                 String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  login_details                      String    @db.VarChar(255)
+  student_id                         String?   @db.Uuid
+  created_at                         DateTime  @default(now()) @db.Timestamp(6)
+  updated_at                         DateTime  @default(now()) @db.Timestamp(6)
+  student_parent_student_idTostudent student?  @relation("parent_student_idTostudent", fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  student_student_parent_idToparent  student[] @relation("student_parent_idToparent")
+}
+
+model student {
+  id                                String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                              String        @db.VarChar(255)
+  address                           String        @db.VarChar(255)
+  class                             String        @db.VarChar(255)
+  fees                              Int
+  marks                             Int
+  parent_id                         String?       @db.Uuid
+  organization_id                   String?       @db.Uuid
+  created_at                        DateTime      @default(now()) @db.Timestamp(6)
+  updated_at                        DateTime      @default(now()) @db.Timestamp(6)
+  parent_parent_student_idTostudent parent[]      @relation("parent_student_idTostudent")
+  organization                      organization? @relation(fields: [organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  parent_student_parent_idToparent  parent?       @relation("student_parent_idToparent", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email        String         @unique @db.VarChar(255)
+  firstName    String?        @db.VarChar(255)
+  lastName     String?        @db.VarChar(255)
+  roq_user_id  String         @db.VarChar(255)
+  tenant_id    String         @db.VarChar(255)
+  created_at   DateTime       @default(now()) @db.Timestamp(6)
+  updated_at   DateTime       @default(now()) @db.Timestamp(6)
+  organization organization[]
+}
